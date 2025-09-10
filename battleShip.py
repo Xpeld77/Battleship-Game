@@ -1,202 +1,206 @@
 import random
-totalScore = 0
+import time
 
-def addShip(board, numShips):
-    """ Function Description:
-            Randomly places the specified number of ships ('S') on the board.
-        Parameter(s): 
-            board : The list of lists representing the game board
-            numShips [int]: The number of ships that user wants on the board
-        Return: None   
+def create_board(size: int) -> list[list[str]]:
+    """Creates a square game board of a given size.
+
+    This uses a list comprehension for a concise, Pythonic implementation.
+
+    Args:
+        size: The integer size of the board (e.g., 5 for a 5x5 board).
+
+    Returns:
+        A list of lists representing the board, initialized with '~' (water).
+    """
+    return [['~' for _ in range(size)] for _ in range(size)]
+
+def place_ships(board: list[list[str]], num_ships: int):
+    """Randomly places a given number of single-cell ships ('S') on the board.
+
+    Args:
+        board: The game board (list of lists).
+        num_ships: The number of ships to place.
     """
     size = len(board)
-    ships = 0
-    while ships < numShips:
-
-        #Generates random row and column coordinates within the given board range
+    ships_placed = 0
+    while ships_placed < num_ships:
         row = random.randint(0, size - 1)
         col = random.randint(0, size - 1)
-
-        #Ship is placed only if the selected cell is empty
         if board[row][col] == '~':
             board[row][col] = 'S'
-            ships += 1
-    return board
+            ships_placed += 1
 
-def checkSetUpError(size, numShips):
-    """ Function Description:
-            Validates user input for the size of the board and the number of ships.
-        Parameter(s): 
-            size [int]: The size of the board
-            numShips [int]: The number of ships
-        Return [Boolean]: Return True if an error is found or False if there is no error.
-    """
-    #Check if board is within valid range
-    if not (2 <= size <= 5):
-        return True #Error if board size is outside valid range
-    
-    maxShips = (size * size) - 2
-    
-    #Check if number of ships is within valid range
-    if not (1 <= numShips <= maxShips):
-        return True #Error if number of ships is outside valid range
-    
-    return False #False if there are no errors
+def display_board(board: list[list[str]], hide_ships: bool = False):
+    """Displays the current state of the board with headers.
 
-def checkFireError(board, row, col):
-    """ Function Description:
-            Validates user input for the coordinates to shot a ship
-        Parameter(s):
-            board : The list of lists representing the game board
-            row [int]: The row coordinate entered by the user.
-            col [int]: The col coordinate entered by the user. 
-        Return [Boolean]: Return True if an error is found or False if there is no error.   
+    Args:
+        board: The game board to display.
+        hide_ships: If True, 'S' will be displayed as '~'. Used for showing
+                    the opponent's board to the player.
     """
     size = len(board)
-    #Check if coordinates are within valid board range
-    if not (0 <= row < size) or not (0 <= col < size):
-        print('Error: Coordinates are out of bounds. Please re-enter the coordinates')
-        return True
-    #Check if the cell at the coordinates has already been targeted
-    if board[row][col] == 'X' or board[row][col] == 'O':
-        print('Error. You have already fired at these coordinates')
-        return True
-    
-    return False #If no errors, the shot is valid
-
-def createBoard(size):
-    """ Function Description:
-            Creates a size-by-size game board initialized with '~'
-        Parameter(s):
-            size [int]: The size of the board which will be used to create a board of size x size
-                        Example: size 2 will create [ ['~', '~'], ['~', '~']]
-        Return: board which is a list of lists  
-    """
-    board = []
-    
-    #Iterates each row and appends "~" to the current row list, then appends the row to the board list
-    for i in range(size):
-        row = []
-        for j in range(size):
-            row.append('~') 
-        board.append(row)
-    return board
-
-def displayBoard(board, round=True):
-    """ Function Description:
-            Displays the current state of the board.  If round is True then print out the current
-            state of the board without showing the ships 'S'.  Else round is False then print out the
-            current state of the board showing hits 'X', misses 'O', ships that have not been hit 'S'
-            and everything else '~'.
-        Parameter(s):
-            board : The list of lists representing the game board.
-            round [Boolean] : True if you are print the board after each shot and False to display
-            the end of a round version.  Default value of True.
-        
-        Return: None  
-    """
-    for row in board:
-        rows = []
+    # Print column headers
+    print("  " + " ".join(str(i) for i in range(size)))
+    for i, row in enumerate(board):
+        display_row = []
         for cell in row:
-            if round:
-                #During the round show '~' for ships, 'X' for hits, 'O' for misses
-                if cell == 'S':
-                    rows.append('~')
-                else:
-                    rows.append(cell)
+            if hide_ships and cell == 'S':
+                display_row.append('~')
             else:
-                #At the end of the round show 'X' for hits, 'O' for misses and 'S' for unhit ships
-                rows.append(cell)
-        print(" ".join(rows))
+                display_row.append(cell)
+        # Print row header and the row itself
+        print(f"{i} " + " ".join(display_row))
 
-def fireShot(board, row, col):
-    """ Function Description:
-            Marks a shot on the board.
-        Parameter(s):
-            board : The list of lists representing the game board
-            row [int]: The row coordinate entered by the user.
-            col [int]: The col coordinate entered by the user. 
-        Return[Boolean]: Return True if a ship was hit and False if the shot missed a ship.     
-    """ 
-    #If the shot at the given coordinates is a ship, the cell will change to 'X' to mark a hit 
+def get_player_shot(size: int) -> tuple[int, int]:
+    """Gets and validates shot coordinates from the player.
+
+    This function includes error handling to prevent crashes from bad input.
+
+    Args:
+        size: The size of the board, used for input validation.
+
+    Returns:
+        A tuple containing the valid (row, col) coordinates.
+    """
+    while True:
+        try:
+            shot_input = input(f"Enter coordinates for your shot (e.g., 3 1): ").split()
+            if len(shot_input) != 2:
+                print("Error: Please enter exactly two numbers separated by a space.")
+                continue
+            row = int(shot_input[0])
+            col = int(shot_input[1])
+            if not (0 <= row < size and 0 <= col < size):
+                print("Error: Coordinates are out of bounds.")
+                continue
+            return row, col
+        except ValueError:
+            print("Error: Invalid input. Please enter numbers only.")
+
+def process_shot(board: list[list[str]], row: int, col: int) -> bool:
+    """Processes a shot on the board and updates its state.
+
+    Args:
+        board: The board being fired upon.
+        row: The row coordinate of the shot.
+        col: The column coordinate of the shot.
+
+    Returns:
+        True if the shot was a hit, False otherwise.
+    """
     if board[row][col] == 'S':
-        board[row][col] = 'X'
+        board[row][col] = 'X'  # Hit
         return True
-    
-    #If the shot at the given coordinates isnt a ship, the cell will change to 'O' to mark a miss
-    else: 
-        board[row][col] = 'O'
+    elif board[row][col] == '~':
+        board[row][col] = 'O'  # Miss
+        return False
+    else:
+        # This spot has already been shot ('X' or 'O')
         return False
 
-def playRound(board, numShips):
-    """ Function Description:
-            Main logic for playing one round 
-        Parameter(s):
-            board : The list of lists representing the game board
-            numShips [int]: The number of ships
-        Return [int]: The number of hits (ships that were hit) for the round.   
+def computer_turn(player_board: list[list[str]], previous_guesses: set) -> tuple[int, int]:
+    """Generates a non-repeating random shot for the computer.
+
+    Args:
+        player_board: The player's board (used for size).
+        previous_guesses: A set of (row, col) tuples of the computer's past shots.
+
+    Returns:
+        The (row, col) coordinates of the computer's shot.
     """
-    shots_left = numShips 
-    hits = 0
+    size = len(player_board)
+    while True:
+        row = random.randint(0, size - 1)
+        col = random.randint(0, size - 1)
+        if (row, col) not in previous_guesses:
+            previous_guesses.add((row, col))
+            return row, col
 
-    print(f'Start of the round: You have {shots_left} shots')
-
-    while shots_left > 0:
-        shot = input('Enter the coordinates for your shot (e.g., 3 1): ').split()
-        row, col = int(shot[0]), int(shot[1])
-
-        #validate the shot using checkFireError
-        if checkFireError(board, row, col):
-            print('Invalid shot. Please try again.')
-            continue
-
-        #Fire the shot using the fireShot function
-        if fireShot(board, row, col):
-            print(f'Shot {numShips - shots_left + 1} is a hit!')
-            hits += 1
-        else:
-            print(f'Shot {numShips - shots_left + 1} is a miss!')
-        
-        #Display the board after each shot
-        displayBoard(board)
-
-        shots_left -= 1
+def main():
+    """Main function to run the Battleship game."""
+    print("--- Welcome to Battleship! ---")
     
-    print('End of the round:')
-    displayBoard(board, round=False) #Display final board with the ships and shots at the end of the round
-
-    return hits
-
-def main():  
-    """ Function Description:
-            Play the game in a designated number of rounds and present the final score to the user.
-            You can not change the code in the main function.  If student changes the main function code
-            then they will lose 25 marks.
-        Parameter(s): No parameters
-        Return: None  
-    """
-    currentRound = 0
-    numRounds = int(input("Enter the number of rounds of Battleship you want to play: "))
-    flag = True
-    while currentRound < numRounds:
-        while flag:
-            size = int(input("Enter the size of the board: "))
-            numShips = int(input("Enter the number of ships: "))
-            flag = checkSetUpError(size, numShips)
-            if (flag == False):
+    # Game Setup
+    while True:
+        try:
+            size = int(input("Enter the size of the board (e.g., 5 for a 5x5 board): "))
+            if size < 3 or size > 10:
+                print("Please choose a size between 3 and 10.")
+                continue
+            
+            max_ships = size * size // 3
+            num_ships = int(input(f"Enter the number of ships (1 to {max_ships}): "))
+            if 1 <= num_ships <= max_ships:
                 break
             else:
-                print("You will need to enter the size of the board and number of ships again.")
+                print(f"Invalid number of ships. Please choose between 1 and {max_ships}.")
+        except ValueError:
+            print("Invalid input. Please enter a number.")
+
+    # Create boards and place ships
+    player_board = create_board(size)
+    computer_board = create_board(size)
+    
+    place_ships(player_board, num_ships)
+    place_ships(computer_board, num_ships)
+    
+    player_ships_remaining = num_ships
+    computer_ships_remaining = num_ships
+    computer_guesses = set()
+
+    # Main Game Loop 
+    while player_ships_remaining > 0 and computer_ships_remaining > 0:
+        # Player's Turn 
+        print("\n--- YOUR TURN ---")
+        print("Your Board:")
+        display_board(player_board)
+        print("\nComputer's Board:")
+        display_board(computer_board, hide_ships=True)
+        
+        while True:
+            row, col = get_player_shot(size)
+            if computer_board[row][col] in ('X', 'O'):
+                print("You've already shot there. Try again.")
+            else:
+                break
+        
+        if process_shot(computer_board, row, col):
+            print("\nIT'S A HIT!")
+            computer_ships_remaining -= 1
+        else:
+            print("\nYOU MISSED!")
+        
+        if computer_ships_remaining == 0:
+            break
+
+        # Computer's Turn 
+        print("\n--- COMPUTER'S TURN ---")
+        time.sleep(1) 
+        comp_row, comp_col = computer_turn(player_board, computer_guesses)
+        print(f"The computer fires at ({comp_row}, {comp_col})...")
+        time.sleep(1)
+
+        if process_shot(player_board, comp_row, comp_col):
+            print("YOUR SHIP WAS HIT!")
+            player_ships_remaining -= 1
+        else:
+            print("THEY MISSED!")
             
-        board = createBoard(size)
-        addShip(board, numShips)
-        print(f"\nRound {currentRound + 1}:\n")
-        hits = playRound(board, numShips)
-        global totalScore
-        totalScore += hits
-        currentRound += 1
-    print(f"\nFinal Score after {numRounds} round(s) is {totalScore} out {numShips * numRounds}.")
-    return
+        print(f"\nShips remaining -> You: {player_ships_remaining} | Computer: {computer_ships_remaining}")
+        input("Press Enter to continue to the next turn...")
+
+    # End of Game 
+    print("\n--- GAME OVER ---")
+    print("Your final board:")
+    display_board(player_board)
+    print("\nComputer's final board:")
+    display_board(computer_board)
+
+    if player_ships_remaining == 0:
+        print("\nThe computer has sunk all your ships! You lose.")
+    else:
+        print("\nYou have sunk all the computer's ships! YOU WIN!")
 
 if __name__ == '__main__':
     main()
+
