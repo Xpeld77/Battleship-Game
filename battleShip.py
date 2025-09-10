@@ -1,45 +1,5 @@
-""" Complete your "Project Details".  If there is an arrow to the right of the line number then click the arrow
-to expand the comment.
-********************************************************
-COMP 1005/1405 Section C - Assignment 4
-
-Project Details:
-    Name: Anes Faisal
-    Student #: 101302511
-    Date Created: November 11, 2024
-
-External Libraries Used (if appliable)
-random
-********************************************************
-"""
-""" Pseudocode 
-        Prompt user input for total rounds of the game
-        Initialize the total game score
-        for each round:
-            Validate the user input for board size and number of ships
-            Handle invalid entries 
-            Set the board and ships.
-            for each shot in the round:
-                Request the user to input the assumed ship coordinates
-                Display the Hit message (Hit or Miss)
-                Display the full board with updated attempts results 
-            Show the final state of the board
-            Display the user final score of this round
-        Display the user final score of the game
-"""
-
-""" Import the libraries if appliable
-
-"""
 import random
-""" Define global variables if appliable
-
-"""
 totalScore = 0
-
-# Suggest to start by understanding the code in the main function.
-# Then proceed with the coding.
-
 
 def addShip(board, numShips):
     """ Function Description:
@@ -171,19 +131,6 @@ def fireShot(board, row, col):
 def playRound(board, numShips):
     """ Function Description:
             Main logic for playing one round 
-            
-            Pseudocode:
-            Keep track of number of shots for the round
-            Keep track of the score (number of hits) for the round
-            Loop until user fires all their shots
-                Ask user to enter coordinates for their shot.  Input two numbers separated by a space.
-                Validate the shot coordinates using checkFireError function
-                Fire a shot using the fireShot function
-                Output if the shot is a hit or a miss
-                display the board after the shot has been taken displayBoard(board)
-            Output "End of round X"
-            display the board at the end of the round displayBoard(board, False)
-    
         Parameter(s):
             board : The list of lists representing the game board
             numShips [int]: The number of ships
